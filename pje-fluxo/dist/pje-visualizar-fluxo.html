@@ -27,7 +27,9 @@
 </head>
 
 <body class="row" style="height: 100vh;">
+
 	<div class="col">
+		<button value="Atualizar" style="width: 100px;" onclick="atualizar();">Atualizar</button>
 		<div id="editor">
 
 		</div>
@@ -36,85 +38,93 @@
 	</div>
 
 	<script type="text/javascript">
-		var starts = Array.from(xmlDoc.getElementsByTagName('start-state'));
-		var decision = Array.from(xmlDoc.getElementsByTagName('decision'));
-		var nodes = Array.from(xmlDoc.getElementsByTagName('node'));
-		var states = Array.from(xmlDoc.getElementsByTagName('process-state'));
-		var tasks = Array.from(xmlDoc.getElementsByTagName('task-node'));
-		var ends = Array.from(xmlDoc.getElementsByTagName('end-state'));
+		function atualizar() {
+			var parser = new DOMParser();
+			var xmlDoc = parser.parseFromString(editor.getValue(), "text/xml");
+			draw(xmlDoc);
+		}
+		function draw(xmlDoc) {
+			var starts = Array.from(xmlDoc.getElementsByTagName('start-state'));
+			var decision = Array.from(xmlDoc.getElementsByTagName('decision'));
+			var nodes = Array.from(xmlDoc.getElementsByTagName('node'));
+			var states = Array.from(xmlDoc.getElementsByTagName('process-state'));
+			var tasks = Array.from(xmlDoc.getElementsByTagName('task-node'));
+			var ends = Array.from(xmlDoc.getElementsByTagName('end-state'));
 
-		var NODES_SHAPES = {
-			"start-state": 'circle',
-			"decision": 'ellipse',
-			"node": 'box',
-			"process-state": 'box',
-			"task-node": 'box',
-			"end-state": 'circle',
-		},
+			var NODES_SHAPES = {
+				"start-state": 'circle',
+				"decision": 'ellipse',
+				"node": 'box',
+				"process-state": 'box',
+				"task-node": 'box',
+				"end-state": 'circle',
+			},
 
-			graph_nodes = starts.concat(decision, nodes, states, tasks, ends);
+				graph_nodes = starts.concat(decision, nodes, states, tasks, ends);
 
-		var id = 1;
-		var dict = {};
-		var nodes = new vis.DataSet(
-			graph_nodes.map(function (node) {
-				var result = {};
-				result.id = id++;
-				result.label = node.getAttribute('name');
-				node.id = result.id;
-				result.shape = NODES_SHAPES[node.tagName];
-				dict[result.label] = node;
-				return result;
-			})
-		);
-		var transitions = [];
-		graph_nodes.forEach(function (node) {
+			var id = 1;
+			var dict = {};
+			var nodes = new vis.DataSet(
+				graph_nodes.map(function (node) {
+					var result = {};
+					result.id = id++;
+					result.label = node.getAttribute('name');
+					node.id = result.id;
+					result.shape = NODES_SHAPES[node.tagName];
+					dict[result.label] = node;
+					return result;
+				})
+			);
+			var transitions = [];
+			graph_nodes.forEach(function (node) {
 
-			Array.from(node.getElementsByTagName('transition')).forEach(function (transition) {
-				var result = {};
-				result.from = node.id;
-				var toName = transition.getAttribute('to');
-				if (toName in dict) {
-					result.to = dict[transition.getAttribute('to')].id;
-				} else {
-					console.log('Not found:' + toName);
-				}
-				var edgeName = transition.getAttribute('name');
-				if (edgeName != toName) {
-					result.label = transition.getAttribute('name')
-				}
-				result.arrows = {
-					to: {
-						enabled: true,
-						type: 'arrow'
+				Array.from(node.getElementsByTagName('transition')).forEach(function (transition) {
+					var result = {};
+					result.from = node.id;
+					var toName = transition.getAttribute('to');
+					if (toName in dict) {
+						result.to = dict[transition.getAttribute('to')].id;
+					} else {
+						console.log('Not found:' + toName);
 					}
-				};
-				transitions.push(result);
-			})
-		});
-
-		var edges = new vis.DataSet(transitions);
-
-		var container = document.getElementById('graph');
-		var data = {
-			nodes: nodes,
-			edges: edges
-		};
-		var options = {
-			smooth: false,
-			physics: {
-				enabled: true
-			}
-		};
-		var network = new vis.Network(container, data, options);
-		network.on("stabilizationIterationsDone", function () {
-			network.setOptions({
-				nodes: { physics: false },
-				edges: { physics: true },
+					var edgeName = transition.getAttribute('name');
+					if (edgeName != toName) {
+						result.label = transition.getAttribute('name')
+					}
+					result.arrows = {
+						to: {
+							enabled: true,
+							type: 'arrow'
+						}
+					};
+					transitions.push(result);
+				})
 			});
-		});
 
+			var edges = new vis.DataSet(transitions);
+
+			var container = document.getElementById('graph');
+			var data = {
+				nodes: nodes,
+				edges: edges
+			};
+			var options = {
+				smooth: false,
+				physics: {
+					enabled: true
+				}
+			};
+			var network = new vis.Network(container, data, options);
+			network.on("stabilizationIterationsDone", function () {
+				network.setOptions({
+					nodes: { physics: false },
+					edges: { physics: true },
+				});
+			});
+		}
+		draw(xmlDoc);
 	</script>
+
 
 	<script>
 		"use strict";
